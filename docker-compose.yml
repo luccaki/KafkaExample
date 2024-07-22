@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    networks:
+      - kafka-network
+                  
+  kafka:
+    image: wurstmeister/kafka:latest
+    environment:
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+    networks:
+      - kafka-network
+            
+  producer:
+    build:
+        context: ./Producer
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: kafka:9092
+    ports:
+      - "1357:80"
+    networks:
+      - kafka-network
+
+  consumer:
+    build:
+        context: ./Consumer
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: kafka:9092
+    networks:
+      - kafka-network
+      
+networks:
+  kafka-network:
+    driver: bridge
